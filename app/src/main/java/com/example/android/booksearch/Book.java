@@ -10,8 +10,8 @@ public class Book {
     private String mAuthor;
 
     public Book(String title, String author) {
-        title = mTitle;
-        author = mAuthor;
+         mTitle = title;
+         mAuthor = author ;
     }
 
     public String getTitle() {return mTitle;}
