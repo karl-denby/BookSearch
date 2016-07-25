@@ -16,12 +16,14 @@
         android:orientation="horizontal">
 
         <EditText
+            android:id="@+id/edt_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="7"
             android:hint="@string/search_hint"/>
 
         <Button
+            android:id="@+id/btn_search"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="3"
