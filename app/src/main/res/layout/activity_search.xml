@@ -34,7 +34,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="Search Results: "/>
+        android:text="@string/search_results"/>
 
     <ListView
         android:id="@+id/list_item"
