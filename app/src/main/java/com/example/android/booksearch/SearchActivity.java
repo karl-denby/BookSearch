@@ -17,12 +17,8 @@ public class SearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        // Make: Test books
-        Book book1 = new Book("The Bible", "God");
-        Book book2 = new Book("God Hates us All", "Hank Moody");
-
         // ArrayList >> Adapter >> ListView
-        ArrayList<Book> arrayOfBooks = new ArrayList<>();
+        ArrayList<Book> arrayOfBooks = QueryUtils.extractBooks();
 
         // we need a class for a userAdapter
         BookAdapter bookAdapter = new BookAdapter(this, arrayOfBooks);
@@ -30,9 +26,6 @@ public class SearchActivity extends AppCompatActivity {
         // We need a listView
         ListView lvBook = (ListView) findViewById(R.id.list_item);
         lvBook.setAdapter(bookAdapter);
-
-        bookAdapter.add(book1);
-        bookAdapter.add(book2);
 
         // Link: Search button and Text entered in TextEdit
         //       Define an onClick that toasts whatever is entered.
@@ -45,12 +38,26 @@ public class SearchActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String search_string;
-                search_string = edt_title.getText().toString();
 
-                Toast.makeText(SearchActivity.this, "You searched for " + search_string, Toast.LENGTH_SHORT).show();
+                if (edt_title.getText().toString().equals("")) {
+                    Toast.makeText(SearchActivity.this, "No input ", Toast.LENGTH_SHORT).show();
+                } else {
+                    search_string = edt_title.getText().toString();
+                    runQuery(search_string);
+                }
             }
         });
+    }
 
+    public void runQuery(String search_string) {
+        String queryURL;
+        String base_url = "https://www.googleapis.com/books/v1/volumes?q=";
+        String end_url = "&maxResults=10";
+
+        queryURL = base_url + search_string + end_url;
+
+        Toast.makeText(SearchActivity.this, queryURL, Toast.LENGTH_SHORT).show();
 
     }
 }
+
