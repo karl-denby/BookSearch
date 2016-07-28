@@ -48,7 +48,7 @@ public class SearchActivity extends AppCompatActivity {
                     Toast.makeText(SearchActivity.this, "No input ", Toast.LENGTH_SHORT).show();
                 } else {
                     search_string = edt_title.getText().toString();
-                    Toast.makeText(SearchActivity.this, search_string, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SearchActivity.this, "Searching for " + search_string, Toast.LENGTH_SHORT).show();
 
                     // Make a search URL
                     url = makeURL(search_string);
@@ -61,16 +61,15 @@ public class SearchActivity extends AppCompatActivity {
         });
     } //onCreate
 
+    /**
+     * Run the Query in a Thread and when it returns call the UI update code
+     */
     private class BooksAsyncTask extends AsyncTask<URL, Void, String> {
 
         @Override
         protected String doInBackground(URL... urls) {
 
             String result = "";
-            int count = urls.length;
-            for (int i = 0; i < count; i++) {
-                Log.v("loop", i + "" + urls[i].toString());
-            }
             // Can't update the UI from here, only thread that made them (main OnCreate) can
             // update them, so just run query, get results and store them somewhere that the
             // main thread can access and use to update the UI.
@@ -86,9 +85,13 @@ public class SearchActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             updateUI(result);
         }
-
     } // BooksAsyncTask
 
+    /**
+     * @param url where is our source data
+     * @return string with our JSON data
+     * @throws IOException, if something went wrong on the Internet
+     */
     private String makeHttpRequest(URL url) throws IOException {
         String jsonResponse = "";
         HttpURLConnection urlConnection = null;
@@ -102,7 +105,7 @@ public class SearchActivity extends AppCompatActivity {
             inputStream = urlConnection.getInputStream();
             jsonResponse = readFromStream(inputStream);
         } catch (IOException e) {
-            Log.e(LOG_TAG, "", e);
+            Log.e(LOG_TAG, "HTTP IOException: ", e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -114,12 +117,39 @@ public class SearchActivity extends AppCompatActivity {
         return jsonResponse;
     } // makeHttpRequest
 
+    /**
+     * @param search_string
+     * @return url for google books api
+     */
     public URL makeURL(String search_string) {
-
         String base_url = "https://www.googleapis.com/books/v1/volumes?q=";
         String end_url = "&maxResults=10";
-        String queryUrl = base_url + search_string + end_url;
+        String search_terms[];
+        String search_term_sep = "+";
+        String queryUrl = "";
         URL url;
+
+        // break up search terms
+        search_terms = search_string.split(" ");
+
+        // if one word assemble they query
+        if (search_terms.length == 1) {
+            queryUrl = base_url + search_string + end_url;
+        } else {
+            // Multiple terms, same start to the url
+            queryUrl += base_url;
+
+            // include the first term
+            queryUrl += search_terms[0];
+
+            // add separator plus the next term
+            for (int i = 1; i < search_terms.length; i++) {
+                queryUrl += search_term_sep + search_terms[i] ;
+            }
+
+            // same end to the url
+            queryUrl += end_url;
+        }
 
         try {
             url = new URL(queryUrl);
@@ -130,6 +160,9 @@ public class SearchActivity extends AppCompatActivity {
         return url;
     } // makeURL
 
+    /**
+     * @param http_result: Convert into bookAdapter and assign it to listView.
+     */
     public void updateUI(String http_result) {
         Log.v(LOG_TAG, "data provided is " + http_result.length() + " long");
 
@@ -160,7 +193,5 @@ public class SearchActivity extends AppCompatActivity {
             }
         }
         return output.toString();
-    }
-
+    } //readFromStream
 }
-
