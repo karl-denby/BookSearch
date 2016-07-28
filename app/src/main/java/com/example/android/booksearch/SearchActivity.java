@@ -10,9 +10,16 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 public class SearchActivity extends AppCompatActivity {
@@ -47,24 +54,65 @@ public class SearchActivity extends AppCompatActivity {
                     url = makeURL(search_string);
 
                     // Pass to the UI update code which should get data, then update the display
-                    updateUI(url);
+                    BooksAsyncTask results = new BooksAsyncTask();
+                    results.execute(url);
                 }
             }
         });
-
     } //onCreate
 
-    public void updateUI(URL url) {
-        // ArrayList >> Adapter >> ListView
-        ArrayList<Book> arrayOfBooks = QueryUtils.extractBooks();
+    private class BooksAsyncTask extends AsyncTask<URL, Void, String> {
 
-        // we need a class for a userAdapter
-        BookAdapter bookAdapter = new BookAdapter(this, arrayOfBooks);
+        @Override
+        protected String doInBackground(URL... urls) {
 
-        // We need a listView
-        ListView lvBook = (ListView) findViewById(R.id.list_item);
-        lvBook.setAdapter(bookAdapter);
-    }
+            String result = "";
+            int count = urls.length;
+            for (int i = 0; i < count; i++) {
+                Log.v("loop", i + "" + urls[i].toString());
+            }
+            // Can't update the UI from here, only thread that made them (main OnCreate) can
+            // update them, so just run query, get results and store them somewhere that the
+            // main thread can access and use to update the UI.
+            try {
+                result = makeHttpRequest(urls[0]);
+            } catch (IOException e) {
+                Log.e(LOG_TAG,"HTTP error", e);
+            }
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            updateUI(result);
+        }
+
+    } // BooksAsyncTask
+
+    private String makeHttpRequest(URL url) throws IOException {
+        String jsonResponse = "";
+        HttpURLConnection urlConnection = null;
+        InputStream inputStream = null;
+        try {
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setReadTimeout(10000 /* milliseconds */);
+            urlConnection.setConnectTimeout(15000 /* milliseconds */);
+            urlConnection.connect();
+            inputStream = urlConnection.getInputStream();
+            jsonResponse = readFromStream(inputStream);
+        } catch (IOException e) {
+            Log.e(LOG_TAG, "", e);
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (inputStream != null) {
+                inputStream.close();
+            }
+        }
+        return jsonResponse;
+    } // makeHttpRequest
 
     public URL makeURL(String search_string) {
 
@@ -80,8 +128,39 @@ public class SearchActivity extends AppCompatActivity {
             return null;
         }
         return url;
-    }
+    } // makeURL
 
+    public void updateUI(String http_result) {
+        Log.v(LOG_TAG, "data provided is " + http_result.length() + " long");
+
+        // ArrayList >> Adapter >> ListView
+        ArrayList<Book> arrayOfBooks = QueryUtils.extractBooks(http_result);
+
+        // we need a class for a userAdapter
+        BookAdapter bookAdapter = new BookAdapter(this, arrayOfBooks);
+
+        // We need a listView
+        ListView lvBook = (ListView) findViewById(R.id.list_item);
+        lvBook.setAdapter(bookAdapter);
+    } // updateUI
+
+    /**
+     * Convert the {@link InputStream} into a String which contains the
+     * whole JSON response from the server.
+     */
+    private String readFromStream(InputStream inputStream) throws IOException {
+        StringBuilder output = new StringBuilder();
+        if (inputStream != null) {
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
+            BufferedReader reader = new BufferedReader(inputStreamReader);
+            String line = reader.readLine();
+            while (line != null) {
+                output.append(line);
+                line = reader.readLine();
+            }
+        }
+        return output.toString();
+    }
 
 }
 
