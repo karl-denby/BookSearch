@@ -3,4 +3,5 @@
     <string name="search_btn">Search</string>
     <string name="search_hint">Book Title</string>
     <string name="search_results">Search Results:</string>
+    <string name="instructions">Please enter your search terms above.  Then click \"Search\", your list of books will be displayed here.</string>
 </resources>

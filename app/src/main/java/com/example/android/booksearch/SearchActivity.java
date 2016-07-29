@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -59,6 +60,15 @@ public class SearchActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // Create a TextView with instructions
+        TextView txtInstruct = (TextView) findViewById(R.id.instructions);
+        txtInstruct.setText(R.string.instructions);
+
+        // Display this textView in the listView when its empty
+        ListView list_item = (ListView) findViewById(R.id.list_item);
+        list_item.setEmptyView(txtInstruct);
+
     } //onCreate
 
     /**
