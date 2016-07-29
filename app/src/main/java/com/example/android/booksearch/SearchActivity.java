@@ -1,5 +1,8 @@
 package com.example.android.booksearch;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,12 +30,18 @@ public class SearchActivity extends AppCompatActivity {
 
     public final String LOG_TAG = "SearchActivity";
 
+    // Will check for null result which mean no interface is online
+    private boolean networkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search);
-
-        // Link: Search button and Text entered in TextEdit
+        setContentView(R.layout.activity_search);// Link: Search button and Text entered in TextEdit
         //       Define an onClick that makes a url, then calls UI update.
         final EditText edt_title = (EditText) findViewById(R.id.edt_title);
         Button btn_search = (Button) findViewById(R.id.btn_search);
@@ -40,12 +49,16 @@ public class SearchActivity extends AppCompatActivity {
         assert btn_search != null;
         btn_search.setOnClickListener(new View.OnClickListener() {
             @Override
-
             public void onClick(View v) {
                 URL url;
                 String search_string;
 
-                if (edt_title.getText().toString().equals("")) {
+                // Check for internet connectivity
+                // .. then check for valid input
+                // ..  both ok then run the search
+                if (!networkAvailable()) {
+                    Toast.makeText(SearchActivity.this, "No internet ", Toast.LENGTH_SHORT).show();
+                } else if (edt_title.getText().toString().equals("")) {
                     Toast.makeText(SearchActivity.this, "No input ", Toast.LENGTH_SHORT).show();
                 } else {
                     search_string = edt_title.getText().toString();
