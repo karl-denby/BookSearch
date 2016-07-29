@@ -1,6 +1,7 @@
 package com.example.android.booksearch;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -14,6 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -29,14 +31,7 @@ import java.util.ArrayList;
 public class SearchActivity extends AppCompatActivity {
 
     public final String LOG_TAG = "SearchActivity";
-
-    // Will check for null result which mean no interface is online
-    private boolean networkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
+    String http_result; //Stores our books, global so we can save onPause and restore onResume
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +43,7 @@ public class SearchActivity extends AppCompatActivity {
 
         assert btn_search != null;
         btn_search.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 URL url;
@@ -57,12 +53,15 @@ public class SearchActivity extends AppCompatActivity {
                 // .. then check for valid input
                 // ..  both ok then run the search
                 if (!networkAvailable()) {
-                    Toast.makeText(SearchActivity.this, "No internet ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SearchActivity.this, getString(R.string.no_internet),
+                            Toast.LENGTH_SHORT).show();
                 } else if (edt_title.getText().toString().equals("")) {
-                    Toast.makeText(SearchActivity.this, "No input ", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SearchActivity.this, getString(R.string.no_search_terms),
+                            Toast.LENGTH_SHORT).show();
                 } else {
                     search_string = edt_title.getText().toString();
-                    Toast.makeText(SearchActivity.this, "Searching for " + search_string, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SearchActivity.this, getString(R.string.searching_for) + search_string,
+                            Toast.LENGTH_SHORT).show();
 
                     // Make a search URL
                     url = makeURL(search_string);
@@ -81,8 +80,45 @@ public class SearchActivity extends AppCompatActivity {
         // Display this textView in the listView when its empty
         ListView list_item = (ListView) findViewById(R.id.list_item);
         list_item.setEmptyView(txtInstruct);
-
     } //onCreate
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // We should have code here that drops usage of things like cameras and sensors
+        // Nothing to heavy though as we will still be visible
+
+        // Save the book values or the search terms?
+        SharedPreferences sharedPref = SearchActivity.this.getSharedPreferences("BookSearch", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        editor.putString("http_result", http_result);
+        editor.apply();
+    } // onPause
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // We should have code here that drops usage of things like cameras and sensors
+        // Nothing to heavy though as we will still be visible
+
+        // Save the book values or the search terms?
+        SharedPreferences sharedPref = SearchActivity.this.getSharedPreferences("BookSearch", Context.MODE_PRIVATE);
+
+        http_result = sharedPref.getString("http_result", "{}");
+        Log.v(LOG_TAG, "Length of restored data is " + http_result.length());
+        updateUI(http_result);
+    } // onResume
+
+    /**
+     * Will check for null result which mean no interface is online
+     */
+    private boolean networkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
     /**
      * Run the Query in a Thread and when it returns call the UI update code
@@ -106,6 +142,7 @@ public class SearchActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
+            http_result = result;  // save for later restoration
             updateUI(result);
         }
     } // BooksAsyncTask
@@ -141,7 +178,7 @@ public class SearchActivity extends AppCompatActivity {
     } // makeHttpRequest
 
     /**
-     * @param search_string
+     * @param search_string what they user typed in
      * @return url for google books api
      */
     public URL makeURL(String search_string) {
