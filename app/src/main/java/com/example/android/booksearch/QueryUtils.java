@@ -78,14 +78,22 @@ public final class QueryUtils {
                 String title = volumeInfo.getString("title");
 
                 // Extract array of authors and turn it into a single string...
-                // Except for first(0) add a comma and a space between entries
-                JSONArray authorsArray = volumeInfo.getJSONArray("authors");
                 String authors = "";
-                for (int j = 0; j < authorsArray.length(); j++) {
-                    if (j >0){
-                        authors += ", ";
+                try {
+                    JSONArray authorsArray = volumeInfo.getJSONArray("authors");
+                    // authors key exists so..
+                    // Except for first(0) add a comma and a space between entries
+                    for (int j = 0; j < authorsArray.length(); j++) {
+                        if (j >0){
+                            // not the first so add a comma and space
+                            authors += ", ";
+                        }
+                        // add author to the string
+                        authors += authorsArray.getString(j);
                     }
-                    authors += authorsArray.getString(j);
+                } catch (JSONException e) {
+                    // authors key doesn't exist so return an empty list
+                    authors = "";
                 }
 
                 // Create a new {@link Book} object with the title and authors from the response.
