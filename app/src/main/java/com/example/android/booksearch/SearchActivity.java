@@ -38,7 +38,7 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);// Link: Search button and Text entered in TextEdit
         //       Define an onClick that makes a url, then calls UI update.
         final EditText edt_title = (EditText) findViewById(R.id.edt_title);
-        Button btn_search = (Button) findViewById(R.id.btn_search);
+        final Button btn_search = (Button) findViewById(R.id.btn_search);
 
         assert btn_search != null;
         btn_search.setOnClickListener(new View.OnClickListener() {
@@ -68,6 +68,7 @@ public class SearchActivity extends AppCompatActivity {
                     // Pass to the UI update code which should get data, then update the display
                     BooksAsyncTask results = new BooksAsyncTask();
                     results.execute(url);
+                    btn_search.hasFocus();
                 }
             }
         });
