@@ -15,9 +15,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +28,9 @@ import java.util.ArrayList;
 public class SearchActivity extends AppCompatActivity {
 
     public final String LOG_TAG = "SearchActivity";
-    String http_result; //Stores our books, global so we can save onPause and restore onResume
+
+    // Stores our search result string, global, save onPause and restore onResume
+    String http_result;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,29 +84,25 @@ public class SearchActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        // We should have code here that drops usage of things like cameras and sensors
-        // Nothing to heavy though as we will still be visible
 
-        // Save the book values or the search terms?
+        // Save the book values
         SharedPreferences sharedPref = SearchActivity.this.getSharedPreferences("BookSearch", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
 
         editor.putString("http_result", http_result);
         editor.apply();
+
     } // onPause
 
     @Override
     protected void onResume() {
         super.onResume();
-        // We should have code here that drops usage of things like cameras and sensors
-        // Nothing to heavy though as we will still be visible
 
-        // Save the book values or the search terms?
+        // Restore the book values
         SharedPreferences sharedPref = SearchActivity.this.getSharedPreferences("BookSearch", Context.MODE_PRIVATE);
-
         http_result = sharedPref.getString("http_result", "{}");
-        Log.v(LOG_TAG, "Length of restored data is " + http_result.length());
         updateUI(http_result);
+
     } // onResume
 
     /**
@@ -121,7 +116,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     /**
-     * Run the Query in a Thread and when it returns call the UI update code
+     * Run the Query in a Thread and when it returns store result and call UI update code
      */
     private class BooksAsyncTask extends AsyncTask<URL, Void, String> {
 
@@ -149,7 +144,7 @@ public class SearchActivity extends AppCompatActivity {
 
     /**
      * @param url where is our source data
-     * @return string with our JSON data
+     * @return string with our JSON data as a String (can save this easily)
      * @throws IOException, if something went wrong on the Internet
      */
     private String makeHttpRequest(URL url) throws IOException {
@@ -254,4 +249,5 @@ public class SearchActivity extends AppCompatActivity {
         }
         return output.toString();
     } //readFromStream
+
 }
